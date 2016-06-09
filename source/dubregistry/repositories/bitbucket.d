@@ -19,26 +19,29 @@ class BitbucketRepository : Repository {
 	private {
 		string m_owner;
 		string m_project;
+		string password;
 	}
 
 	static void register()
 	{
 		Repository factory(Json info){
-			return new BitbucketRepository(info.owner.get!string, info.project.get!string);
+			return new BitbucketRepository(info.owner.get!string, info.project.get!string, info.password.get!string);
 		}
 		addRepositoryFactory("bitbucket", &factory);
 	}
 
-	this(string owner, string project)
+	this(string owner, string project, string _password)
 	{
 		m_owner = owner;
 		m_project = project;
+		password = _password;
+		std.stdio.writeln ("new Rep, pass=", password);
 	}
 
 	RefInfo[] getTags()
 	{
 		Json tags;
-		try tags = readJson("https://api.bitbucket.org/1.0/repositories/"~m_owner~"/"~m_project~"/tags");
+		try tags = readJson("https://api.bitbucket.org/1.0/repositories/"~m_owner~"/"~m_project~"/tags", m_owner, password);
 		catch( Exception e ) { throw new Exception("Failed to get tags: "~e.msg); }
 		RefInfo[] ret;
 		foreach( string tagname, tag; tags ){
@@ -56,7 +59,7 @@ class BitbucketRepository : Repository {
 
 	RefInfo[] getBranches()
 	{
-		Json branches = readJson("https://api.bitbucket.org/1.0/repositories/"~m_owner~"/"~m_project~"/branches");
+		Json branches = readJson("https://api.bitbucket.org/1.0/repositories/"~m_owner~"/"~m_project~"/branches", m_owner, password);
 		RefInfo[] ret;
 		foreach( string branchname, branch; branches ){
 			auto commit_hash = branch.raw_node.get!string();
@@ -69,7 +72,7 @@ class BitbucketRepository : Repository {
 
 	RepositoryInfo getInfo()
 	{
-		auto nfo = readJson("https://api.bitbucket.org/1.0/repositories/"~m_owner~"/"~m_project);
+		auto nfo = readJson("https://api.bitbucket.org/1.0/repositories/"~m_owner~"/"~m_project, m_owner, password);
 		RepositoryInfo ret;
 		ret.isFork = nfo["is_fork"].opt!bool;
 		return ret;
@@ -79,7 +82,7 @@ class BitbucketRepository : Repository {
 	{
 		assert(path.absolute, "Passed relative path to readFile.");
 		auto url = "https://bitbucket.org/api/1.0/repositories/"~m_owner~"/"~m_project~"/raw/"~commit_sha~path.toString();
-		downloadCached(url, (scope input) {
+		downloadCached(url, m_owner, password, (scope input) {
 			reader(input);
 		}, true);
 	}
@@ -93,7 +96,7 @@ class BitbucketRepository : Repository {
 
 	void download(string ver, scope void delegate(scope InputStream) del)
 	{
-		downloadCached(getDownloadUrl(ver), del);
+		downloadCached(getDownloadUrl(ver), m_owner, password, del);
 	}
 }
 

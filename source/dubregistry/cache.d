@@ -178,9 +178,13 @@ void downloadCached(URL url, scope void delegate(scope InputStream str) callback
 	s_cache.get(url, callback, cache_priority);
 }
 
-void downloadCached(string url, scope void delegate(scope InputStream str) callback, bool cache_priority = false)
+void downloadCached(string url, string username, string password, scope void delegate(scope InputStream str) callback, bool cache_priority = false)
 {
-	return downloadCached(URL.parse(url), callback, cache_priority);
+	URL _url = URL.parse (url);
+	_url.username = username;
+	_url.password = password;
+
+	return downloadCached(_url, callback, cache_priority);
 }
 
 void clearCacheEntry(URL url)

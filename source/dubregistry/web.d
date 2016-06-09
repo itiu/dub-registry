@@ -376,20 +376,21 @@ class DubRegistryWebFrontend {
 	}
 
 	@auth @path("/register_package")
-	void getRegisterPackage(User _user, string kind = null, string owner = null, string project = null, string _error = null)
+	void getRegisterPackage(User _user, string kind = null, string owner = null, string password = null, string project = null, string _error = null)
 	{
 		auto user = _user;
 		string error = _error;
 		auto registry = m_registry;
-		render!("my_packages.register.dt", user, kind, owner, project, error, registry);
+		render!("my_packages.register.dt", user, kind, owner, password, project, error, registry);
 	}
 
 	@auth @path("/register_package") @errorDisplay!getRegisterPackage
-	void postRegisterPackage(string kind, string owner, string project, User _user, bool ignore_fork = false)
+	void postRegisterPackage(string kind, string owner, string password, string project, User _user, bool ignore_fork = false)
 	{
 		Json rep = Json.emptyObject;
 		rep["kind"] = kind;
 		rep["owner"] = owner;
+		rep["password"] = password;
 		rep["project"] = project;
 
 		if (!ignore_fork) {
@@ -465,13 +466,14 @@ class DubRegistryWebFrontend {
 	}
 
 	@auth @path("/my_packages/:packname/set_repository") @errorDisplay!getMyPackagesPackage
-	void postSetPackageRepository(string kind, string owner, string project, string _packname, User _user)
+	void postSetPackageRepository(string kind, string owner, string password, string project, string _packname, User _user)
 	{
 		enforceUserPackage(_user, _packname);
 
 		Json rep = Json.emptyObject;
 		rep["kind"] = kind;
 		rep["owner"] = owner;
+		rep["password"] = password;
 		rep["project"] = project;
 		m_registry.setPackageRepository(_packname, rep);
 

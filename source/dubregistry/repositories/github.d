@@ -21,6 +21,9 @@ class GithubRepository : Repository {
 		string m_project;
 		string m_authUser;
 		string m_authPassword;
+
+                string username = "";
+                string password = "";
 	}
 
 	static void register(string user, string password)
@@ -44,13 +47,13 @@ class GithubRepository : Repository {
 		import std.datetime : SysTime;
 
 		Json tags;
-		try tags = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project~"/tags?per_page=100");
+		try tags = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project~"/tags?per_page=100", username, password);
 		catch( Exception e ) { throw new Exception("Failed to get tags: "~e.msg); }
 		RefInfo[] ret;
 		foreach_reverse (tag; tags) {
 			try {
 				auto tagname = tag.name.get!string;
-				Json commit = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project~"/commits/"~tag.commit.sha.get!string, true, true);
+				Json commit = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project~"/commits/"~tag.commit.sha.get!string, username, password, true, true);
 				ret ~= RefInfo(tagname, tag.commit.sha.get!string, SysTime.fromISOExtString(commit.commit.committer.date.get!string));
 				logDebug("Found tag for %s/%s: %s", m_owner, m_project, tagname);
 			} catch( Exception e ){
@@ -64,11 +67,11 @@ class GithubRepository : Repository {
 	{
 		import std.datetime : SysTime;
 
-		Json branches = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project~"/branches");
+		Json branches = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project~"/branches", username, password);
 		RefInfo[] ret;
 		foreach_reverse( branch; branches ){
 			auto branchname = branch.name.get!string;
-			Json commit = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project~"/commits/"~branch.commit.sha.get!string, true, true);
+			Json commit = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project~"/commits/"~branch.commit.sha.get!string, username, password, true, true);
 			ret ~= RefInfo(branchname, branch.commit.sha.get!string, SysTime.fromISOExtString(commit.commit.committer.date.get!string));
 			logDebug("Found branch for %s/%s: %s", m_owner, m_project, branchname);
 		}
@@ -77,7 +80,7 @@ class GithubRepository : Repository {
 
 	RepositoryInfo getInfo()
 	{
-		auto nfo = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project);
+		auto nfo = readJson(getAPIURLPrefix()~"/repos/"~m_owner~"/"~m_project, username, password);
 		RepositoryInfo ret;
 		ret.isFork = nfo["fork"].opt!bool;
 		return ret;
@@ -87,7 +90,7 @@ class GithubRepository : Repository {
 	{
 		assert(path.absolute, "Passed relative path to readFile.");
 		auto url = getContentURLPrefix()~"/"~m_owner~"/"~m_project~"/"~commit_sha~path.toString();
-		downloadCached(url, (scope input) {
+		downloadCached(url, null, null, (scope input) {
 			reader(input);
 		}, true);
 	}
@@ -101,7 +104,7 @@ class GithubRepository : Repository {
 
 	void download(string ver, scope void delegate(scope InputStream) del)
 	{
-		downloadCached(getDownloadUrl(ver), del);
+		downloadCached(getDownloadUrl(ver), null, null, del);
 	}
 
 	private string getAPIURLPrefix() {

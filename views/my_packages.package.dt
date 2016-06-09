@@ -74,6 +74,9 @@ block body
 			label(for="owner") Repository owner:
 			input(type="text", name="owner", value=pack.repository.owner.get!string)
 		p
+			label(for="password") Repository password:
+			input(type="password", name="password", value=pack.repository.password.get!string)
+		p
 			label(for="project") Repository name:
 			input(type="text", name="project", value=pack.repository.project.get!string)
 		p
