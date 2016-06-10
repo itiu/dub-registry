@@ -284,7 +284,11 @@ class DubRegistryWebFrontend {
 
 			// add download to statistic
 			m_registry.addDownload(BsonObjectID.fromString(packageInfo.id.get!string), ver, req.headers.get("User-agent", null));
-			if (versionInfo["downloadUrl"].get!string.length > 0) {
+
+			auto pack = m_registry.getPackageInfo(pname, true);
+			string pwd = pack.repository.password.get!string;
+
+			if (versionInfo["downloadUrl"].get!string.length > 0 && (pwd is null || pwd.length == 0)) {
 				// redirect to hosting service specific URL
 				redirect(versionInfo.downloadUrl.get!string);
 			} else {
