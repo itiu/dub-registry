@@ -35,7 +35,6 @@ class BitbucketRepository : Repository {
 		m_owner = owner;
 		m_project = project;
 		password = _password;
-		std.stdio.writeln ("new Rep, pass=", password);
 	}
 
 	RefInfo[] getTags()
